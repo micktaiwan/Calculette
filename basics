@@ -1,0 +1,6 @@
+# basic stuff
+
+a = 1
+b = a+2
+c = a/b # a is casted to floated first
+
