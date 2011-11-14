@@ -6,7 +6,7 @@ http://en.wikipedia.org/wiki/Machine_learning
 
 # Prerequisites
 
-Parselet
-  http://kschiess.github.com/parslet/
-  Install: gem install parslet
+* Parselet
+  *  http://kschiess.github.com/parslet/
+  *  Install: gem install parslet
 
