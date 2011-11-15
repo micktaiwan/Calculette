@@ -6,10 +6,10 @@
 
 require 'readline'
 require 'types'
+require 'version'
 
 class Calculette
 
-  ProgramVersion = "Calculette - v0.1.2 - 14-Nov-2011"
   CLIST = [
     'help', 'load', 'error_tree', 'symbols'
     ].sort
