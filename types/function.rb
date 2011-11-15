@@ -15,6 +15,7 @@ class Function < Brain
   end
 
   def to_s
+    "<\"#{@name}\": #{super}/#{@param_names.size}>"
   end
 
 end
