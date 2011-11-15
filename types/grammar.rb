@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'parslet'
-require 'transforms'
+require File.join(File.dirname(__FILE__), 'transforms')
 
 class MathGrammarParser < Parslet::Parser
 
@@ -25,7 +25,7 @@ class MathGrammarParser < Parslet::Parser
   rule(:variable)           { identifier.as(:variable) } # gets simplified into a value, an "identifier" does not
   rule(:sum_op)             { match('[+-]') >> space? }
   rule(:mul_op)             { match('[*/]') >> space? }
-  rule(:atom)               { integer | variable}
+  rule(:atom)               { integer | fcall.as(:fcall) | variable}
   rule(:assign)             { identifier.as(:identifier) >> assign_sign >> expression.as(:value) }
   rule(:sum) do
     mul.as(:left) >>  sum_op.as(:op) >>  sum.as(:right) |
@@ -53,7 +53,6 @@ class MathGrammarParser < Parslet::Parser
   # root
   rule(:command) do
     fdef.as(:fdef)        |
-    fcall.as(:fcall)      |
     assign.as(:assign)    |
     sum                   |
     space?

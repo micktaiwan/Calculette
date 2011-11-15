@@ -1,7 +1,7 @@
-require 'grammar'
+require File.join(File.dirname(__FILE__), 'grammar')
 require 'parslet/convenience'
 
-class Brain < Object # TODO: rename Brain as Context ?
+class Brain < MObject # TODO: rename Brain as Context ?
 
   attr_reader :parser, :last_error_tree, :symbols
 
