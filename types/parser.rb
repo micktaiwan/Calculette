@@ -26,12 +26,16 @@ class Parser < MObject
     end
   end
 
-  def assign(var_name, value)
-    @current_context.symbols[var_name] = value
+  def assign(var_name, value, context)
+    context[var_name.to_s] = value
+    "assignation of #{var_name} = #{value} (context: #{context.name})"
   end
 
-  def value_of(var_name)
-    @current_context.symbols[var_name]
+  def value_of(var_name, context)
+    v = context[var_name.to_s]
+    puts "#{var_name} = #{v ? v : "nil"} (context: #{context.name})"
+    raise MRuntimeError, "Error: #{var_name} is not defined (context: #{context.name})" if !v
+    v
   end
 
   # options:
@@ -41,7 +45,7 @@ class Parser < MObject
     begin
       tree = @parser.parse_with_debug(input)
       #p tree
-      ast = @transf.apply(tree, :brain => self, :context=>contxet)
+      ast = @transf.apply(tree, :brain => self, :context=>context)
       #p ast
       return ast
     rescue  Parslet::ParseFailed => e
@@ -67,17 +71,6 @@ class Parser < MObject
     end
   end
 
-  def assign(id,value)
-    @current_context[id.to_s] =  value
-    "#{id} = #{value} (context: #{@current_context.name})"
-  end
-
-  def value_of(id)
-    v = @current_context[id.to_s]
-    puts "#{v} (context: #{@current_context.name})"
-    v
-  end
-
   def op(op,left,right)
     if !left
       return "left operator is not defined"
@@ -101,14 +94,14 @@ class Parser < MObject
     end
   end
 
-  def fdef(name,args,body)
-    @current_context[name.to_s] = Function.new(name,args,body.to_s.strip, self)
-    "new function '#{name}(#{args.join(',')})'"
+  def fdef(name,args,body, context)
+    context[name.to_s] = Function.new(name,args,body.to_s.strip, self)
+    "new function '#{name}(#{args.join(',')})' in context '#{context.name}'"
   end
 
-  def fcall(name,vars)
-    f = @current_context[name.to_s]
-    raise "unknown function '#{name}(#{vars.join(',')})" if f.class.name!='Function'
+  def fcall(name,vars, context)
+    f = context[name.to_s]
+    raise "unknown function '#{name}(#{vars.join(',')}) in context '#{context.name}'" if f.class.name!='Function'
     return f.call(vars)
   end
 

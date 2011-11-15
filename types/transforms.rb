@@ -8,13 +8,13 @@ class MathGrammarTransform < Parslet::Transform
        :right     => simple(:right),
        :op        => simple(:op))    { brain.op(op, left,right) }
   rule(:variable  => simple(:id)) do
-    v = brain.value_of(id)
+    v = brain.value_of(id, context)
     if !v;"#{id} is not defined";else;v;end
   end
 
   # assignment
   rule(:assign    => {:value=>simple(:value), :identifier=>simple(:id)}) do
-    brain.assign(id,value)
+    brain.assign(id,value, context)
   end
 
   # Hacks so that "()" returns as []...
@@ -27,10 +27,10 @@ class MathGrammarTransform < Parslet::Transform
           :arglist=>sequence(:args),
           :body=>simple(:body)
         }) do
-    brain.fdef(name,args,body)
+    brain.fdef(name,args,body, context)
   end
   rule(:fcall=>{:name=>simple(:name), :varlist=>sequence(:vars)}) do
-    brain.fcall(name,vars)
+    brain.fcall(name, vars, context)
   end
 end
 
