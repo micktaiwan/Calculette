@@ -43,8 +43,8 @@ class MathGrammarParser < Parslet::Parser
   rule(:parglist)   { lparen >> arglist.repeat >> rparen }
 
   # functions
-  rule(:fdef_keyword)     { str("fdef ") >> space? }
-  rule(:fend_keyword)     { str("fend") >> space? }
+  rule(:fdef_keyword)     { str("def ") >> space? }
+  rule(:fend_keyword)     { str("endf") >> space? }
   rule(:argument)   { identifier.as(:argument) }
   rule(:fdef)       { fdef_keyword >> identifier.as(:name) >> parglist.as(:arglist) >> separator >> fbody.as(:body) >> fend_keyword}
   rule(:fbody)      { (fend_keyword.absnt? >> any).repeat(1) }

@@ -18,7 +18,7 @@ class ST
   def print_all
     puts "#{@symbols.size} symbols"
     @symbols.each { |name, value|
-      puts "- #{name}:\t\"#{value}\" (#{value.class.name})"
+      puts "- #{name}: #{value.to_s}"
       }
   end
 

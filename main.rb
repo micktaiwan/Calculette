@@ -16,9 +16,9 @@ class Calculette
 
   def initialize
     puts "Welcome to #{ProgramVersion}\nType 'help' to get... help.\nPress TAB for autocompletion."
-    @brain = Brain.new
+    @parser = Parser.new
     ARGV.each do|a|
-      @brain.load_file(a)
+      @parser.load_file(a)
     end
   end
 
@@ -32,17 +32,17 @@ class Calculette
           case
           when (input=="quit" or input=="exit")
             exit
-          when (input=="error_tree")
-            puts @brain.last_error_tree
+          brwhen (input=="error_tree")
+            puts @parser.last_error_tree
           when input[0..3]=="help"
             print_help(input[5..-1])
           when input[0..3]=="load"
-            @brain.load_file(input[5..-1])
+            @parser.load_file(input[5..-1])
           when input=="symbols"
-            @brain.symbols.print_all
+            @parser.global_context.symbols.print_all
           when input==""
           else
-            Brain::print_ast(@brain.execute(input))
+            Parser::print_ast(@parser.execute(input))
           end
         # inner loop
         rescue  Exception=> e

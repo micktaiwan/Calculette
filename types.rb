@@ -1,5 +1,5 @@
 require 'types/st'
 require 'types/base'
-require 'types/brain'
+require 'types/parser'
 require 'types/function'
 

@@ -6,9 +6,9 @@ c = a/b # a is casted to floated first
 
 # Functions
 
-fdef mul(x,y)
+def mul(x,y)
   x*y
-fend
+endf
 
 # call the defined function
 mul(2,3) # => 6

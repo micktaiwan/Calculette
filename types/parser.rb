@@ -1,40 +1,43 @@
 require File.join(File.dirname(__FILE__), 'grammar')
 require 'parslet/convenience'
 
-class Brain < MObject # TODO: rename Brain as Context ?
+class Parser < MObject # TODO: rename Brain as Context ?
 
-  attr_reader :parser, :last_error_tree, :symbols
+  attr_reader :global_context, :last_error_tree, :parser, :transf
 
   def initialize(options={})
     super()
-    @symbols    = ST.new
+    @last_error_tree = "None"
+    @global_context    = Context.new
     @parser     = MathGrammarParser.new
     @transf     = MathGrammarTransform.new
-    @last_error_tree = "None"
+
     load_file("lib") unless options[:no_lib_loading]
     #parser = MathGrammarParser.new.identifier.parse_with_debug("a")
     #p parser
   end
 
-  def load_file(file, options={})
+  def load_file(file, context=@global_context, options={})
     begin
-      execute(File.open(file, "rb").read, options)
+      execute(File.open(file, "rb").read, context, options)
     rescue Exception=>e
       puts e
+      puts e.backtrace
     end
   end
 
   def assign(var_name, value)
-    @symbols[var_name] = value
+    @current_context.symbols[var_name] = value
   end
 
   def value_of(var_name)
-    @symbols[var_name]
+    @current_context.symbols[var_name]
   end
 
   # options:
   #   :repeat_input => print input again before execution
-  def execute(input, options={})
+  def execute(input, context=@global_context, options={})
+    @current_context = context
     puts input if options[:repeat_input]
     begin
       tree = @parser.parse_with_debug(input)
@@ -61,12 +64,12 @@ class Brain < MObject # TODO: rename Brain as Context ?
   end
 
   def assign(id,value)
-    @symbols[id.to_s] =  value
+    @current_context.symbols[id.to_s] =  value
     "#{id} = #{value}"
   end
 
   def value_of(id)
-    @symbols[id.to_s]
+    @current_context.symbols[id.to_s]
   end
 
   def op(op,left,right)
@@ -93,12 +96,12 @@ class Brain < MObject # TODO: rename Brain as Context ?
   end
 
   def fdef(name,args,body)
-    @symbols[name.to_s] = Function.new(name,args,body.to_s.strip)
+    @current_context.symbols[name.to_s] = Function.new(name,args,body.to_s.strip, self)
     "new function '#{name}(#{args.join(',')})'"
   end
 
   def fcall(name,vars)
-    f = @symbols[name.to_s]
+    f = @current_context.symbols[name.to_s]
     raise "unknown function '#{name}(#{vars.join(',')})" if f.class.name!='Function'
     return f.call(vars)
   end
