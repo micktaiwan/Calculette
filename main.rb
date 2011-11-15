@@ -32,17 +32,19 @@ class Calculette
           case
           when (input=="quit" or input=="exit")
             exit
-          brwhen (input=="error_tree")
+          when (input=="error_tree")
             puts @parser.last_error_tree
           when input[0..3]=="help"
             print_help(input[5..-1])
           when input[0..3]=="load"
             @parser.load_file(input[5..-1])
           when input=="symbols"
-            @parser.global_context.symbols.print_all
+            @parser.global_context.print_all
           when input==""
           else
-            Parser::print_ast(@parser.execute(input))
+            ast = @parser.execute(input)
+            next if !ast
+            Parser::print_ast(ast)
           end
         # inner loop
         rescue  Exception=> e

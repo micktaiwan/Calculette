@@ -2,17 +2,19 @@ class Function < MObject
 
   def initialize(n,a,b, parser)
     super()
-    @context = Context.new
+    @context = Context.new("function")
     @name, @param_names, @body = n,a.map{|a| a.to_s},b
     @parser = parser
   end
 
   def call(vars)
+    raise MRuntimeError, "wrong number of argument for #{self.to_s} (#{vars.size} for #{@param_names.size} )" if vars.size != @param_names.size
     # initialize local variables
+    @context.clear
     vars.each_with_index { |a,i|
-      @context.symbols[@param_names[i]] = a
+      @context[@param_names[i]] = a
       }
-    # execute the function body
+    # execute and return the function body
     @parser.execute(@body, @context)
   end
 

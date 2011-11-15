@@ -39,8 +39,8 @@ class MathGrammarParser < Parslet::Parser
   # lists
   rule(:varlist)    { expression >> (comma >> expression).repeat }
   rule(:arglist)    { argument >> (comma >> argument).repeat }
-  rule(:pvarlist)   { lparen >> varlist.repeat >> rparen }
-  rule(:parglist)   { lparen >> arglist.repeat >> rparen }
+  rule(:pvarlist)   { (lparen >> varlist.repeat >> rparen).as(:plist) }
+  rule(:parglist)   { (lparen >> arglist.repeat >> rparen).as(:plist) }
 
   # functions
   rule(:fdef_keyword)     { str("def ") >> space? }

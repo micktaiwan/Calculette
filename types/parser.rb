@@ -1,19 +1,19 @@
 require File.join(File.dirname(__FILE__), 'grammar')
 require 'parslet/convenience'
 
-class Parser < MObject # TODO: rename Brain as Context ?
+class Parser < MObject
 
   attr_reader :global_context, :last_error_tree, :parser, :transf
 
   def initialize(options={})
     super()
-    @last_error_tree = "None"
-    @global_context    = Context.new
-    @parser     = MathGrammarParser.new
-    @transf     = MathGrammarTransform.new
+    @last_error_tree  = "None"
+    @global_context   = Context.new("global")
+    @parser           = MathGrammarParser.new
+    @transf           = MathGrammarTransform.new
 
     load_file("lib") unless options[:no_lib_loading]
-    #parser = MathGrammarParser.new.identifier.parse_with_debug("a")
+    #parser = MathGrammarParser.new.pvarlist.as(:varlist).parse_with_debug("(1)")
     #p parser
   end
 
@@ -37,17 +37,21 @@ class Parser < MObject # TODO: rename Brain as Context ?
   # options:
   #   :repeat_input => print input again before execution
   def execute(input, context=@global_context, options={})
-    @current_context = context
     puts input if options[:repeat_input]
     begin
       tree = @parser.parse_with_debug(input)
       #p tree
+      ast = @transf.apply(tree, :brain => self, :context=>contxet)
+      #p ast
+      return ast
     rescue  Parslet::ParseFailed => e
       puts e.message.gsub(/[\n]/,'\n')
       @last_error_tree = @parser.error_tree
-      return
+      return nil
+    rescue  MRuntimeError => e
+      puts e.message
+      return nil
     end
-    return @transf.apply(tree, :brain => self)
   end
 
   def self.print_ast(ast, options={})
@@ -64,12 +68,14 @@ class Parser < MObject # TODO: rename Brain as Context ?
   end
 
   def assign(id,value)
-    @current_context.symbols[id.to_s] =  value
-    "#{id} = #{value}"
+    @current_context[id.to_s] =  value
+    "#{id} = #{value} (context: #{@current_context.name})"
   end
 
   def value_of(id)
-    @current_context.symbols[id.to_s]
+    v = @current_context[id.to_s]
+    puts "#{v} (context: #{@current_context.name})"
+    v
   end
 
   def op(op,left,right)
@@ -96,12 +102,12 @@ class Parser < MObject # TODO: rename Brain as Context ?
   end
 
   def fdef(name,args,body)
-    @current_context.symbols[name.to_s] = Function.new(name,args,body.to_s.strip, self)
+    @current_context[name.to_s] = Function.new(name,args,body.to_s.strip, self)
     "new function '#{name}(#{args.join(',')})'"
   end
 
   def fcall(name,vars)
-    f = @current_context.symbols[name.to_s]
+    f = @current_context[name.to_s]
     raise "unknown function '#{name}(#{vars.join(',')})" if f.class.name!='Function'
     return f.call(vars)
   end
