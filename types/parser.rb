@@ -12,9 +12,9 @@ class Parser < MObject
     @parser           = MathGrammarParser.new
     @transf           = MathGrammarTransform.new
     load_file("lib") unless options[:no_lib_loading]
-    load_file("basics")
-    t = @parser.parse("(a=2)+3")
-    p t
+    #load_file("basics")
+    #t = @parser.parse("(a=2)+3")
+    #p t
   end
 
   def load_file(file, context=@global_context, options={})
@@ -33,7 +33,7 @@ class Parser < MObject
 
   def value_of(var_name, context)
     v = context[var_name.to_s]
-    puts "#{var_name} = #{v ? v : "nil"} (context: #{context.name})"
+    # puts "#{var_name} = #{v ? v : "nil"} (context: #{context.name})"
     raise MRuntimeError, "Error: #{var_name} is not defined (context: #{context.name})" if !v
     v
   end
