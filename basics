@@ -11,5 +11,5 @@ def mul(x,y)
 endf
 
 # call the defined function
-mul(2,3) # => 6
+rv = mul(2,3) # => 6
 

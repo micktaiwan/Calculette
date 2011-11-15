@@ -13,8 +13,7 @@ class Parser < MObject
     @transf           = MathGrammarTransform.new
 
     load_file("lib") unless options[:no_lib_loading]
-    #parser = MathGrammarParser.new.pvarlist.as(:varlist).parse_with_debug("(1)")
-    #p parser
+    #load_file("basics")
   end
 
   def load_file(file, context=@global_context, options={})

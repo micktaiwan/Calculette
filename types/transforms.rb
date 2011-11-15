@@ -7,6 +7,7 @@ class MathGrammarTransform < Parslet::Transform
   rule(:left      => simple(:left),
        :right     => simple(:right),
        :op        => simple(:op))    { brain.op(op, left,right) }
+  rule(:identifier  => simple(:id)) { id.to_s }
   rule(:variable  => simple(:id)) do
     v = brain.value_of(id, context)
     if !v;"#{id} is not defined";else;v;end
