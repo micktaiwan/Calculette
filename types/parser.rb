@@ -11,9 +11,10 @@ class Parser < MObject
     @global_context   = Context.new("global")
     @parser           = MathGrammarParser.new
     @transf           = MathGrammarTransform.new
-
     load_file("lib") unless options[:no_lib_loading]
-    #load_file("basics")
+    load_file("basics")
+    t = @parser.parse("(a=2)+3")
+    p t
   end
 
   def load_file(file, context=@global_context, options={})
@@ -26,8 +27,8 @@ class Parser < MObject
   end
 
   def assign(var_name, value, context)
+    #"assignation of #{var_name} = #{value} (context: #{context.name})"
     context[var_name.to_s] = value
-    "assignation of #{var_name} = #{value} (context: #{context.name})"
   end
 
   def value_of(var_name, context)

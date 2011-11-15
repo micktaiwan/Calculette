@@ -4,7 +4,7 @@ require File.join(File.dirname(__FILE__), 'transforms')
 
 class MathGrammarParser < Parslet::Parser
 
-  # Simple things
+# simple things
   rule(:lparen)             { str('(') >> space? }
   rule(:rparen)             { str(')') >> space? }
   rule(:comma)              { str(',') >> space? }
@@ -20,14 +20,19 @@ class MathGrammarParser < Parslet::Parser
   rule(:identifier)         { match['a-z'].repeat(1).as(:identifier) >> space? }
   rule(:separator)          { str(';') }
 
-  # Arithmetic
-  rule(:expression)         { sum | variable } # expression: stuff that can be a right value
+# arithmetic
+
+  # expression: stuff that can be a right value
+  # an assignment can be a right value, the value assigned become the value of the expression
+  # a=b=1 => a==1, b==1
+  rule(:expression)         { assign.as(:assign) | sum | variable | pexpression }
+  rule(:pexpression)        { lparen >> expression >> rparen }
+  rule(:assign)             { identifier >> assign_sign >> expression.as(:value) }
   rule(:integer)            { match('[0-9]').repeat(1).as(:integer) >> space? }
   rule(:variable)           { identifier.as(:variable) } # gets simplified into a value, an "identifier" does not
   rule(:sum_op)             { match('[+-]') >> space? }
   rule(:mul_op)             { match('[*/]') >> space? }
-  rule(:atom)               { integer | fcall.as(:fcall) | variable}
-  rule(:assign)             { identifier >> assign_sign >> expression.as(:value) }
+  rule(:atom)               { pexpression | assign.as(:assign) | integer | fcall.as(:fcall) | variable }
   rule(:sum) do
     mul.as(:left) >>  sum_op.as(:op) >>  sum.as(:right) |
     mul
@@ -37,13 +42,13 @@ class MathGrammarParser < Parslet::Parser
     atom
   end
 
-  # lists
+# lists
   rule(:varlist)    { expression >> (comma >> expression).repeat }
   rule(:arglist)    { argument >> (comma >> argument).repeat }
   rule(:pvarlist)   { (lparen >> varlist.repeat >> rparen).as(:plist) }
   rule(:parglist)   { (lparen >> arglist.repeat >> rparen).as(:plist) }
 
-  # functions
+# functions
   rule(:fdef_keyword) { str("def ") >> space? }
   rule(:fend_keyword) { str("endf") >> space? }
   rule(:argument)     { identifier.as(:argument) }
@@ -51,10 +56,16 @@ class MathGrammarParser < Parslet::Parser
   rule(:fbody)        { (fend_keyword.absnt? >> any).repeat(1) }
   rule(:fcall)        { identifier.as(:name) >> pvarlist.as(:varlist) }
 
+# helpers
+  rule(:puts_keyword) { str("puts") >> space? }
+  rule(:puts)         { puts_keyword >> expression }
+
+  rule(:keyword)      { puts }
+
   # root
   rule(:command) do
+    keyword               |
     fdef.as(:fdef)        |
-    assign.as(:assign)    |
     sum
   end
   rule(:com_and_comment)  { command >> end_comment.maybe }

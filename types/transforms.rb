@@ -22,6 +22,9 @@ class MathGrammarTransform < Parslet::Transform
   rule(:plist=>sequence(:arr)) { arr }
   rule(:plist=>"()") { [] }
 
+  # helpers
+  rule(:puts=>simple(:arg)) { puts arg.to_s }
+
   # functions
   rule(:fdef=>{
           :name=>simple(:name),
