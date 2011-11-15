@@ -11,8 +11,10 @@ class Parser < MObject
     @global_context   = Context.new("global")
     @parser           = MathGrammarParser.new
     @transf           = MathGrammarTransform.new
-    load_file("lib") unless options[:no_lib_loading]
-    #load_file("basics")
+    unless options[:no_lib_loading]
+      load_file("libs/core")
+      #load_file("examples/basics")
+    end
     #t = @parser.parse("(a=2)+3")
     #p t
   end
