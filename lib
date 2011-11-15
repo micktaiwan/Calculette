@@ -1,4 +1,7 @@
 # everything you will put in this file will be loaded by default
 # pi = 3.1415926535
 
+fdef cube(a)
+  a*a*a
+fend
 

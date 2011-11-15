@@ -1,26 +1,32 @@
 require 'rubygems'
 require 'parslet'
+require 'transforms'
 
 class MathGrammarParser < Parslet::Parser
-  # Single character rules
-  rule(:lparen)     { str('(') >> space? }
-  rule(:rparen)     { str(')') >> space? }
-  rule(:comma)      { str(',') >> space? }
-  rule(:assign_sign){ str('=') >> space? }
-  rule(:spaces)     { space.repeat }
-  rule(:space)      { multiline_comment | line_comment | match["\s"] }
-  rule(:space?)     { spaces.maybe }
-  rule(:line_comment) { str('#') >> (newline.absent? >> any).repeat }
-  rule(:multiline_comment) { str('/*') >> (str('*/').absent? >> any).repeat >> str('*/') }
-  rule(:newline) { str("\n") >> str("\r").maybe }
 
-  # Things
-  rule(:integer)    { match('[0-9]').repeat(1).as(:integer) >> space? }
-  rule(:identifier) { match['a-z'].repeat(1).as(:identifier) >> space? }
-  rule(:sum_op)     { match('[+-]') >> space? }
-  rule(:mul_op)     { match('[*/]') >> space? }
+  # Simple things
+  rule(:lparen)             { str('(') >> space? }
+  rule(:rparen)             { str(')') >> space? }
+  rule(:comma)              { str(',') >> space? }
+  rule(:assign_sign)        { str('=') >> space? }
+  rule(:newline)            { match['\\n'] }
+  rule(:space)              { match["\s"]}
+  rule(:space?)             { space.maybe }
+  rule(:empty_line)         { space? >> newline }
+  rule(:lines_comment)      { str('/*') >> (str('*/').absent? >> any).repeat >> str('*/') }
+  rule(:end_comment)        { str('#') >> (newline.absent? >> any).repeat }
+  rule(:comment)            { lines_comment | end_comment }
+  rule(:identifier)         { match['a-z'].repeat(1) >> space? }
+  rule(:separator)          { newline | str(';') }
 
-  # Grammar parts
+  # Arithmetic
+  rule(:expression)         { sum | variable } # expression: stuff that can be a right value
+  rule(:integer)            { match('[0-9]').repeat(1).as(:integer) >> space? }
+  rule(:variable)           { identifier.as(:variable) } # gets simplified into a value, an "identifier" does not
+  rule(:sum_op)             { match('[+-]') >> space? }
+  rule(:mul_op)             { match('[*/]') >> space? }
+  rule(:atom)               { integer | variable}
+  rule(:assign)             { identifier.as(:identifier) >> assign_sign >> expression.as(:value) }
   rule(:sum) do
     mul.as(:left) >>  sum_op.as(:op) >>  sum.as(:right) |
     mul
@@ -29,41 +35,32 @@ class MathGrammarParser < Parslet::Parser
     atom.as(:left) >> mul_op.as(:op) >> mul.as(:right) |
     atom
   end
-  rule(:atom)       { integer | identifier}
-  rule(:arglist)    { expression >> (comma >> expression).repeat }
-  rule(:funcall)    { identifier.as(:funcall) >> lparen >> arglist.as(:arglist) >> rparen }
-  rule(:assign)     { identifier >> assign_sign >> expression.as(:value) }
 
-  # stuff that can be a right value
-  rule(:expression) { sum | identifier }
+  # lists
+  rule(:varlist)    { expression >> (comma >> expression).repeat }
+  rule(:arglist)    { argument >> (comma >> argument).repeat }
+  rule(:pvarlist)   { lparen >> varlist.repeat >> rparen }
+  rule(:parglist)   { lparen >> arglist.repeat >> rparen }
 
+  # functions
+  rule(:fdef_keyword)     { str("fdef ") >> space? }
+  rule(:fend_keyword)     { str("fend") >> space? }
+  rule(:argument)   { identifier.as(:argument) }
+  rule(:fdef)       { fdef_keyword >> identifier.as(:name) >> parglist.as(:arglist) >> separator >> fbody.as(:body) >> fend_keyword}
+  rule(:fbody)      { (fend_keyword.absnt? >> any).repeat(1) }
+  rule(:fcall)      { identifier.as(:name) >> pvarlist.as(:varlist) }
+
+  # root
   rule(:command) do
-    assign.as(:assign)  |
-    sum                 |
-    funcall             |
-    integer
+    fdef.as(:fdef)        |
+    fcall.as(:fcall)      |
+    assign.as(:assign)    |
+    sum                   |
+    space?
+    #empty_line
   end
+  rule(:commands)  { command >> (end_comment.repeat(1) >> commands | separator >> commands).repeat }
+  root :commands
 
-  rule(:line)   { space? >> command.maybe }
-  rule(:lines)  { line >> (newline >> lines.maybe).maybe }
-  root :lines
-
-end
-
-class MathGrammarTransform < Parslet::Transform
-  rule(:integer => simple(:i)) { i.to_i}
-  rule(:left => simple(:left), :right => simple(:right), :op => simple(:op))  { brain.op(op, left,right) }
-  rule(:left => subtree(:tree)) { tree }
-  rule(:right => subtree(:tree)) { tree }
-  #rule(:mul => simple(:int))  { int }
-  #rule(:right=> simple(:int)) { int }
-  rule(:assign=>{:value=>simple(:value), :identifier=>simple(:id)}) do
-    brain.assign(id,value)
-  end
-  rule(:identifier=>simple(:id)) do
-    v = brain.value_of(id)
-    if !v;"#{id} is not defined";else;v;end
-  end
-  rule(:funcall => 'puts', :arglist => subtree(:arglist))             { FunCall.new('puts', arglist) }
 end
 

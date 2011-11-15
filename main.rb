@@ -1,17 +1,17 @@
 #!/usr/bin/env ruby
 # :main: README
 
-# =MachineLearning maths
+# =Calculette
 # main program without gui
 
 require 'readline'
-require 'brain'
+require 'types'
 
 class Calculette
 
-  ProgramVersion = "Calculette - v0.1 - 13-Nov-2011"
+  ProgramVersion = "Calculette - v0.1.2 - 14-Nov-2011"
   CLIST = [
-    'help', 'load'
+    'help', 'load', 'error_tree', 'symbols'
     ].sort
 
   def initialize
@@ -32,19 +32,22 @@ class Calculette
           case
           when (input=="quit" or input=="exit")
             exit
+          when (input=="error_tree")
+            puts @brain.last_error_tree
           when input[0..3]=="help"
             print_help(input[5..-1])
           when input[0..3]=="load"
             @brain.load_file(input[5..-1])
+          when input=="symbols"
+            @brain.symbols.print_all
           when input==""
           else
-            @brain.execute(input)
+            Brain::print_ast(@brain.execute(input))
           end
         # inner loop
         rescue  Exception=> e
           puts e
-          #puts e.backtrace
-          puts @brain.parser.error_tree
+          puts e.backtrace
         end
       end
     # outer loop for readline

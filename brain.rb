@@ -1,33 +1,24 @@
 require 'grammar'
+require 'parslet/convenience'
 
-class FunCall < Struct.new(:name, :args);
-  def eval
-    p args.map { |s| s.eval }
-  end
-end
+class Brain < Object # TODO: rename Brain as Context ?
 
-class Brain
+  attr_reader :parser, :last_error_tree, :symbols
 
-  attr_reader :parser
-
-  def initialize
-    super
-    @symbols  = Hash.new
-    @parser   = MathGrammarParser.new
-    @transf   = MathGrammarTransform.new
-    load_file("defaults", false)
+  def initialize(options={})
+    super()
+    @symbols    = ST.new
+    @parser     = MathGrammarParser.new
+    @transf     = MathGrammarTransform.new
+    @last_error_tree = "None"
+    load_file("lib") unless options[:no_lib_loading]
+    #parser = MathGrammarParser.new.identifier.parse_with_debug("a")
+    #p parser
   end
 
-  def load_file(file, display_results=true)
+  def load_file(file, options={})
     begin
-      File.open(file, "rb").read.split("\n"). each do |line|
-        line = line.strip
-        if line.empty? and display_results
-          puts
-        else
-          execute(line, true, display_results)
-        end
-      end
+      execute(File.open(file, "rb").read, options)
     rescue Exception=>e
       puts e
     end
@@ -41,16 +32,31 @@ class Brain
     @symbols[var_name]
   end
 
-  def execute(input, repeat_input=false, display_results=true)
-    print input + "\t => " if repeat_input and display_results
-    tree = @parser.parse(input)
-    #p tree
-    ast = @transf.apply(tree, :brain => self)
-    if ast.class.name=='Array' or ast.class.name=='Hash'
+  # options:
+  #   :repeat_input => print input again before execution
+  def execute(input, options={})
+    puts input if options[:repeat_input]
+    begin
+      tree = @parser.parse_with_debug(input)
+      #p tree
+    rescue  Parslet::ParseFailed => e
+      puts e.message.gsub(/[\n]/,'\n')
+      @last_error_tree = @parser.error_tree
+      return
+    end
+    return @transf.apply(tree, :brain => self)
+  end
+
+  def self.print_ast(ast, options={})
+    if ast.class.name=='Hash'
       print "Could not simplify "
       p ast
+    elsif ast.class.name=='Array' # list of commands
+      ast.each { |ast|
+        print_ast(ast, options)
+        }
     else
-      puts ast if display_results
+      puts ast if !options[:hide_results]
     end
   end
 
@@ -84,6 +90,17 @@ class Brain
     rescue Exception=>e
       e # if the operation is not possible just return the result in plain english
     end
+  end
+
+  def fdef(name,args,body)
+    @symbols[name.to_s] = Function.new(name,args,body.to_s.strip)
+    "new function '#{name}(#{args.join(',')})'"
+  end
+
+  def fcall(name,vars)
+    f = @symbols[name.to_s]
+    raise "unknown function '#{name}(#{vars.join(',')})" if f.class.name!='Function'
+    return f.call(vars)
   end
 
 end

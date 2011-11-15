@@ -1,6 +1,15 @@
-# basic stuff
+# Arithmetic
 
 a = 1
 b = a+2
 c = a/b # a is casted to floated first
+
+# Functions
+
+fdef mul(x,y)
+  x*y
+fend
+
+# call the defined function
+mul(2,3) # => 6
 
